@@ -10,7 +10,35 @@ description = "spock environment extension"
 sourceCompatibility = 1.6
 
 repositories {
+	maven { url "http://nexus.movideo.com/nexus/content/groups/public" }
 	mavenCentral()
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			repository(url: "http://nexus.movideo.com/nexus/content/repositories/releases/") {
+				authentication(userName: "deployment", password: "deployment!")
+			}
+		}
+	}
+	
+	// custom tasks for creating source/javadoc jars
+	task sourcesJar(type: Jar, dependsOn:classes) {
+		 classifier = 'sources'
+		 from sourceSets.main.allSource
+	}
+	 
+	task javadocJar(type: Jar, dependsOn:javadoc) {
+		 classifier = 'javadoc'
+		 from javadoc.destinationDir
+	}
+	 
+	// add javadoc/source jar tasks as artifacts
+	artifacts {
+		 archives sourcesJar
+		 archives javadocJar
+	}
 }
 
 def spockVersion = '0.6-groovy-1.7'
