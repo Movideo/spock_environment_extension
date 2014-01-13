@@ -15,16 +15,41 @@ class EnvironmentEndPointExtension extends AbstractAnnotationDrivenExtension<Env
 
 	private static final Log LOG = LogFactory.getLog(getClass());
 	
-	private static def config = new ConfigSlurper().parse(new File('src/test/resources/SpockConfig.groovy').toURL())
+	private static final defaultConfig = new File('src/test/resources/SpockConfig.groovy')
+
+	/**
+	 * 
+	 */
+	private static def configFile
 
 	/**
 	 * env environment variable
 	 * <p>
 	 * Defaults to {@code LOCAL_END_POINT}
 	 */
-	private static final String envString = System.getProperties().getProperty("env", config.envHost);
+	private static String envString
 
-	static {
+	static 
+	{
+		if(System.getProperties().getProperty("spockConfig") != null || System.getenv("spockConfig") != null)
+		{
+			if(System.getProperties().getProperty("spockConfig") != null)
+			{
+				configFile = new ConfigSlurper().parse(new File(System.getProperties().getProperty("spockConfig")).toURL())
+
+			}
+			else
+			{
+				configFile = new ConfigSlurper().parse(new File(System.getenv("spockConfig")).toURL())
+			}
+		}
+		else
+		{
+			configFile = new ConfigSlurper().parse(new File('src/test/resources/SpockConfig.groovy').toURL())
+		}
+
+		envString = System.getProperties().getProperty("env", configFile.envHost)
+
 		LOG.info("Environment End Point [" + envString + "]")
 	}
 	
@@ -32,7 +57,8 @@ class EnvironmentEndPointExtension extends AbstractAnnotationDrivenExtension<Env
 	 * {@inheritDoc}
 	 */
 	@Override
-	void visitFieldAnnotation(EnvironmentEndPoint annotation, FieldInfo field) {
+	void visitFieldAnnotation(EnvironmentEndPoint annotation, FieldInfo field) 
+	{
 		def interceptor = new EnvironmentInterceptor(field, envString)
 
 		interceptor.install(field.parent.getTopSpec())
@@ -44,27 +70,32 @@ class EnvironmentEndPointExtension extends AbstractAnnotationDrivenExtension<Env
  * Environment Intercepter
  *
  */
-class EnvironmentInterceptor extends AbstractMethodInterceptor {
+class EnvironmentInterceptor extends AbstractMethodInterceptor 
+{
 	private final FieldInfo field
 	private final String envString
 
-	EnvironmentInterceptor(FieldInfo field, String envString) {
+	EnvironmentInterceptor(FieldInfo field, String envString) 
+	{
 		this.field = field
 		this.envString = envString
 	}
 
-	private void injectEnvironmentHost(target) {
+	private void injectEnvironmentHost(target) 
+	{
 		field.writeValue(target, envString)
 	}
 
 	@Override
-	void interceptSetupMethod(IMethodInvocation invocation) {
+	void interceptSetupMethod(IMethodInvocation invocation) 
+	{
 		injectEnvironmentHost(invocation.target)
 		invocation.proceed()
 	}
 
 	@Override
-	void install(SpecInfo spec) {
+	void install(SpecInfo spec) 
+	{
 		spec.setupMethod.addInterceptor this
 	}
 }

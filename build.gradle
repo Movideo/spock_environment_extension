@@ -2,46 +2,27 @@ apply plugin:'groovy'
 apply plugin:'eclipse'
 apply plugin: 'maven'
 
-version = "1.0.0"
+version = "2.0"
 group = 'com.movideo'
 description = "spock environment extension"
 
 // Spock works with Java 1.5 and above
-sourceCompatibility = 1.6
+sourceCompatibility = 1.7
 
 repositories {
-	maven { url "http://nexus.movideo.com/nexus/content/groups/public" }
-	mavenCentral()
-}
+        mavenLocal()
 
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			repository(url: "http://nexus.movideo.com/nexus/content/repositories/releases/") {
-				authentication(userName: "deployment", password: "deployment!")
-			}
-		}
-	}
-	
-	// custom tasks for creating source/javadoc jars
-	task sourcesJar(type: Jar, dependsOn:classes) {
-		 classifier = 'sources'
-		 from sourceSets.main.allSource
-	}
-	 
-	task javadocJar(type: Jar, dependsOn:javadoc) {
-		 classifier = 'javadoc'
-		 from javadoc.destinationDir
-	}
-	 
-	// add javadoc/source jar tasks as artifacts
-	artifacts {
-		 archives sourcesJar
-		 archives javadocJar
-	}
-}
+        maven {
+            url "https://oss.sonatype.org/content/groups/public"
+        }
 
-def spockVersion = '0.6-groovy-1.7'
+        // Spock snapshots are available from the Sonatype OSS snapshot repository
+        maven {
+            url "http://oss.sonatype.org/content/repositories/snapshots"
+        }
+
+        mavenCentral()
+}
 
 configurations.all {
 	exclude group: 'com.sun.jdmk', module: 'jmxtools'
@@ -50,11 +31,17 @@ configurations.all {
 }
 
 dependencies {
-	groovy 'org.codehaus.groovy:groovy-all:1.7.10'
+	compile "org.codehaus.groovy:groovy-all:2.1.5"
 
-	compile "org.spockframework:spock-core:$spockVersion"
-	compile "org.codehaus.groovy.modules.http-builder:http-builder:0.5.2"
+	compile "org.spockframework:spock-core:0.7-groovy-2.0"
+    
+	compile ("org.codehaus.groovy.modules.http-builder:http-builder:0.5.2") {
+            exclude group: 'commons-codec', module: 'commons-codec'
+    }
+
 	compile "log4j:log4j:1.2.15"
 }
 
-task wrapper(type: Wrapper) { gradleVersion = "1.0" }
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.7'
+}
